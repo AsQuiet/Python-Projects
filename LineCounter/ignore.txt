@@ -1,0 +1,15 @@
+.DS_Store
+.mp3
+.wav
+.mp4
+.jpg
+.png
+.pbs
+brief.js
+p5.js
+brief_compressed.js
+.save
+.git
+.vscode
+.pyc
+__pychache__
