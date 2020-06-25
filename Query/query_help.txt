@@ -1,0 +1,11 @@
+INGORE:
+adding =>   query.py __ignore__ add     ... ... ...
+remove =>   query.py __ignore__ remove  ... ... ...
+clear =>    query.py __ignore__ clear
+print =>    query.py __ignore__ print
+
+QUERY:
+query.py PATH ... ... ...
+eg.
+query.py ~/Documents/ .txt .py
+    => will print out every .txt and .py file inside Documents

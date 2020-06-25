@@ -120,9 +120,15 @@ def gen_empty(n=50):
     for x in range(n):s+=" "
     return s
 
+def query_help():
+    f = open("query_help.txt", "r")
+    for line in f:print(line.rstrip("\n"))
+    f.close()
+    pass
 
 ignore = get_file_as_array()
 if __name__ == "__main__":
     if "__ignore__" in sys.argv:handle_ignore()
+    elif "help" in sys.argv:query_help()
     else: main()
 
