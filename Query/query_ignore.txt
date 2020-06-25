@@ -1,0 +1,4 @@
+node_modules
+npm
+emsdk
+__pycache__
