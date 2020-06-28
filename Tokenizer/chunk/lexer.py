@@ -1,4 +1,4 @@
-
+from chunk.string import remove_characters
 from chunk.token import Token, TokenTypes
 
 class Lexer():
@@ -9,7 +9,7 @@ class Lexer():
         current_pos = 0
         tokens = []
 
-        if Lexer.is_line_keyword("end", line):
+        if Lexer.is_line_keyword("end", remove_characters(line, [" "])):
             return [Token(TokenTypes.END, "end")] 
             
         if Lexer.is_line_keyword("return", line):

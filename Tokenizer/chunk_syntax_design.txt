@@ -32,13 +32,3 @@ end
 // acces function
 var3 = mychunk>chunk_function1:
 ============================================================
-
-mychunk >>
-
-PI = 3.1415
-
-add:: x, y
-return x + y
-end
-
-end
