@@ -87,3 +87,10 @@ def map_string(stri, func):
         char = stri[x]
         new_string += func(char, x)
     return new_string
+
+def isempty(stri):
+    if stri == "":return True
+    res = True 
+    for char in stri:
+        res = res and char == " "
+    return res
