@@ -1,8 +1,44 @@
 Chunk Language Syntax
 *interpeter
 *non OOP
-*typed
+
 ============================================================
 COMMENTS
 // and /* */
 ============================================================
+VARS
+var = 34
+var2 // syntax error
+============================================================
+FUNCTIONS
+afunction:: an_argument, an_argument2
+// do stuff...
+end
+
+// call function
+afunction:4,4
+============================================================
+CHUNKS
+// works like a namespace
+mychunk >>
+
+var2_in_chunk = 34
+
+chunk_function1::
+return mychunk::var2_in_chunk
+
+end
+
+// acces function
+var3 = mychunk>chunk_function1:
+============================================================
+
+mychunk >>
+
+PI = 3.1415
+
+add:: x, y
+return x + y
+end
+
+end
