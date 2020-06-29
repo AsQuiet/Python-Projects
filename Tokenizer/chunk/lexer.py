@@ -17,14 +17,15 @@ class Lexer():
             current_pos += len("return")
 
         while True:
-            if current_pos == len(line):break
+            if current_pos >= len(line):break
+
             current_char = line[current_pos]
             current_pos += 1
 
             if current_char == '"':
-                s, c = Lexer.get_string(line)
+                s, new_pos = Lexer.get_string(line,current_pos-1)
                 tokens.append(Token(TokenTypes.STRING, s))
-                current_pos += len(s) - 1 + c
+                current_pos = new_pos
                 continue
 
             if current_char.isdigit():
@@ -45,7 +46,33 @@ class Lexer():
                         continue
                 tokens.append(Token(TokenTypes.CHUNK_POINTER, ">"))
                 continue
+
+            # looking for operations
+            if current_char in ("+", "-", "/", "*"):
+                if current_char == "+":tokens.append(Token(TokenTypes.ADD, current_char))
+                if current_char == "-":tokens.append(Token(TokenTypes.SUB, current_char))
+                if current_char == "/":tokens.append(Token(TokenTypes.DIV, current_char))
+                if current_char == "*":tokens.append(Token(TokenTypes.MUL, current_char))
+                continue
+                
+            if current_char == "(":
+                tokens.append(Token(TokenTypes.OPEN_PAREN, "("))
+                continue
+                
+            if current_char == ")":
+                tokens.append(Token(TokenTypes.CLOSE_PAREN, ")"))
+                continue
+
+            # checking for arrays
+            if current_char == "[":
+                tokens.append(Token(TokenTypes.OPEN_ARR, "["))
+                continue
             
+            if current_char == "]":
+                tokens.append(Token(TokenTypes.CLOSE_ARR, "]"))
+                continue
+            
+            # arguments and function call / definitions
             if current_char == ",":
                 tokens.append(Token(TokenTypes.ARG_SEPARATOR, ","))
                 continue
@@ -59,7 +86,8 @@ class Lexer():
                         continue
                 tokens.append(Token(TokenTypes.CALL_FUNCTION, ":"))
                 continue
-
+            
+            # ingnore empty whitespace
             if current_char == " ":
                 # tokens.append(Token(TokenTypes.EMPTY, " "))
                 continue
@@ -97,35 +125,39 @@ class Lexer():
         return digit, current_pos
         
     @staticmethod
-    def get_string(text):
+    def get_string(text, pos):
         """Returns the string in the text starting at pos."""   
+        current_pos = pos
         found_string = ""
         in_string = False
-        special_char_count = 0
+        
+        while True:
+            if current_pos >= len(text):break;
+            current_char = text[current_pos]
 
-        for x in range(len(text)):
-            current_char = text[x]
-
-            # are we in the string, entering the string or coming accros another quotation mark?
             if current_char == '"':
-                if in_string:
-                    if x > 0:
-                        if text[x-1] == "$":
-                            found_string += '"'
-                            special_char_count += 1
-                            continue
-                    in_string = False
-                else:
-                    in_string = True
-                continue
-
-            if in_string and current_char != "$":
-                found_string += current_char
-            elif in_string and x > 0 and text[x-1] == "$" and current_char == "$":
-                special_char_count += 1
-                found_string += current_char
+                # the user might want to type a ", then the user should use a $ before 
+                if current_pos > 0:
+                    if text[current_pos - 1] == "$":
+                        found_string += '"'
+                        current_pos += 1
+                        continue
+                in_string = not in_string
             
-        return '"' + found_string + '"', special_char_count
+            if in_string and current_char != "$": 
+                found_string += current_char
+                current_pos += 1
+            
+            if in_string and current_char == "$":
+                if current_pos > 0:
+                    if text[current_pos - 1] == "$":
+                        found_string += "$"
+                current_pos += 1
+
+            if not in_string:break
+            
+
+        return found_string+'"',current_pos + 1
     
     @staticmethod
     def is_line_keyword(keyword, line):
