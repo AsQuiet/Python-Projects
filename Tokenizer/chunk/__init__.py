@@ -9,7 +9,7 @@ def run(path):
     commands = []
     num = 0
     for line in lines:
-        num += 1
+        num +=  1
         commands.append(Scripter.select_script(line, num))
     
     print("\nparsed commands :")

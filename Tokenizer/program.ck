@@ -1,11 +1,11 @@
-D func::
+D function:: x
 
-    > root::print:5
-
+    C lol x
+    > root::print:x
 
 END D
 
-CALL func:
+CALL function: 5
 
 /*
 CHUNK chunk_::

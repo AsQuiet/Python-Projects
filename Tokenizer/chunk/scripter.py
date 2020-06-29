@@ -157,12 +157,20 @@ class Visitor():
 
     # used to change the way variables are put into memory depending on the scope
     CURRENT_SCOPE = ""
-
+    CURRENT_FUNCTION = ""
     @staticmethod
     def parse(scripts):
         
         for command in scripts:
-            
+
+            # end command?
+            if command["COMMAND"] == "END":
+                Visitor.handle_end(command)
+
+            if Visitor.CURRENT_FUNCTION != "":
+                Visitor.GLOBAL_MEMORY[Visitor.CURRENT_FUNCTION][1].append(command)
+                continue
+
             # chunk function is being called
             if command["COMMAND"] == ">":
                 if command["CHUNK_NAME"] == "root":
@@ -178,13 +186,10 @@ class Visitor():
             if command["COMMAND"] in ("C", "CCAL", "COP", "C>", "C>>"):
                 Visitor.handle_assignments(command)
 
-            # end command?
-            if command["COMMAND"] == "END":
-                Visitor.handle_end(command)
-
-
-
-
+            if command["COMMAND"] == "D":
+                Visitor.handle_function_creation(command)
+            
+        print(Visitor.GLOBAL_MEMORY)
 
     @staticmethod
     def handle_root_calls(command):
@@ -228,10 +233,25 @@ class Visitor():
         print("\nhandling chunk creation")
         # adjusting scope
         Visitor.CURRENT_SCOPE = command["CHUNK_NAME"] + "::"
+    
+    @staticmethod
+    def handle_function_creation(command):
+        print("\nhandling function creation")
+        
+        func_name = command["FUNCTION_NAME"]
+        func_args = command["##ARGUMENTS"]
+
+        Visitor.CURRENT_FUNCTION = Visitor.CURRENT_SCOPE + func_name
+        Visitor.GLOBAL_MEMORY[Visitor.CURRENT_FUNCTION] = [func_args, []]
+
+        print("updated memory")
+        print(Visitor.GLOBAL_MEMORY)
 
     @staticmethod
     def handle_end(command):
         print("\nhandling end statement")
+        if command["TARGET"] == "D":
+            Visitor.CURRENT_FUNCTION = ""
         if command["TARGET"] == "CHUNK" and "::" in Visitor.CURRENT_SCOPE:
             Visitor.CURRENT_SCOPE = ""
 
