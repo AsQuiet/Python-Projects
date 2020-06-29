@@ -4,8 +4,9 @@ from chunk.token import Token, TokenTypes
 class Lexer():
 
     @staticmethod
-    def get_tokens(line):
-        print("lexing line : " + line)
+    def get_tokens(line, line_number=-1):
+        # setting the line number for all the tokens that will be generateed
+        Token.CURRENTLINE = line_number
         current_pos = 0
         tokens = []
 
@@ -86,6 +87,20 @@ class Lexer():
                         continue
                 tokens.append(Token(TokenTypes.CALL_FUNCTION, ":"))
                 continue
+
+            # checking for boolean values
+            if current_char == "t" and current_pos + 2 < len(line):
+                if line[current_pos] + line[current_pos + 1] + line[current_pos + 2] == "rue":
+                    current_pos += 3
+                    tokens.append(Token(TokenTypes.BOOL, "true"))
+                    continue
+            
+            if current_char == "f" and current_pos + 3 < len(line):
+                if line[current_pos] + line[current_pos + 1] + line[current_pos + 2] + line[current_pos + 3] == "alse":
+                    current_pos += 4
+                    tokens.append(Token(TokenTypes.BOOL, "false"))
+                    continue
+
             
             # ingnore empty whitespace
             if current_char == " ":

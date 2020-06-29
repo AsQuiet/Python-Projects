@@ -1,5 +1,6 @@
 from chunk.preprocessor import Preprocessor
 from chunk.lexer import Lexer
+from chunk.parser import Parser
 
 def run(path):
     # print("running chunk file at : " + path)
@@ -18,8 +19,16 @@ class Interpreter():
     
     def interpret(self, lines):
         tokens = []
+        i = 0
         for line in lines:
-            ts = Lexer.get_tokens(line)
-            tokens.extend(ts)
-            
-        for t in tokens:print(str(t))
+            i += 1
+            ts = Lexer.get_tokens(line, i)
+            tokens.append(ts)
+        
+        print("\nparsing commands :")
+        commands = []
+        for line_tokens in tokens:
+            commands.extend(Parser.parse_line(line_tokens))
+        print(" ")
+        print(str(commands))
+

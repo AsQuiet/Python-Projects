@@ -1,4 +1,19 @@
-a= ["lol", "lol", 2.34, 45 / 23]
+something = call:
+
+
+/*
+
+// step2
+age = 3 + 4
+
+// step3
+get_value::
+return 4
+end
+
+// step4
+age = get_value: + 3490
+*/
 
 /*
 chunk >>
