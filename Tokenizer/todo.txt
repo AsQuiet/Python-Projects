@@ -1,0 +1,7 @@
+Chunk Language To Do
+
+Lexer / Scripter
+    chunk function call return values (create varr => CCHUNK?)
+    COP var identiefier
+Visitor
+

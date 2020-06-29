@@ -1,6 +1,5 @@
 from chunk.preprocessor import Preprocessor
-from chunk.interpreter import Interpreter
-from chunk.scripter import Script, Scripter
+from chunk.scripter import Script, Scripter, Visitor
 
 def run(path):
     
@@ -17,7 +16,8 @@ def run(path):
     for c in commands:
         print("     "+str(c))
     print("---") 
-    print(Interpreter.GLOBAL_DEFINITIONS)
 
-    Interpreter.parse(commands)
+    print("global definitions : " + str(Visitor.GLOBAL_DEFINITIONS) + "\n\n")
+
+    Visitor.parse(commands)
            
