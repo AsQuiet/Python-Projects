@@ -24,31 +24,7 @@ class Preprocessor():
                 in_comment_section = False
                 continue
             if in_comment_section:continue
-            lines.append(Preprocessor.remove_front_whitespaces(line))
+            lines.append(line)
             
         f.close()
         return lines
-    
-    @staticmethod
-    def remove_front_whitespaces(line):
-        """  eg:
-        CHUNK l
-            D ll::
-            END
-        END
-        
-        gets converted to
-
-        CHUNK l
-        D ll::
-        END
-        END
-        """
-        is_em = True
-        line_ = ""
-        for char in line:
-            if char != " " and is_em:
-                is_em = False
-            if not is_em:
-                line_ += char
-        return line_

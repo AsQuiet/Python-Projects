@@ -1,2 +1,2 @@
-import chunk
-chunk.run("program.ck")
+from chunk import run
+run("program.ck")

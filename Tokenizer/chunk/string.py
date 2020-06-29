@@ -49,6 +49,7 @@ def list_separator(stri, separator="-"):
 
     for char in toArray(stri):
         if char == separator:
+            if isempty(current_string):continue
             arr.append(current_string)
             current_string = ""
         else: current_string += char
@@ -94,3 +95,7 @@ def isempty(stri):
     for char in stri:
         res = res and char == " "
     return res
+
+
+
+    
