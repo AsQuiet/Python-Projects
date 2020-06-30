@@ -73,6 +73,7 @@ class Script():
 # ------------------------------------------------------------------------------------------
 
 class Scripts():
+
     VAR_SCRIPT      = Script(["COMMAND", "VAR_NAME", "VAR_VALUE"])
     VAR_SCRIPT2     = Script(["COMMAND", "VAR_NAME", "FUNCTION_NAME", "&:", "##ARGUMENTS"])
     VAR_SCRIPT3     = Script(["COMMAND", "VAR_NAME", "CHUNK_NAME", "&:", "&:", "&:","CHUNK_VAR"])
@@ -85,6 +86,8 @@ class Scripts():
     CHUNK_CALL      = Script(["COMMAND", "CHUNK_NAME", "&:", "&:", "&:", "FUNCTION_NAME", "&:", "##ARGUMENTS"])
     END             = Script(["COMMAND", "TARGET"])
     REASSIGN        = Script(["COMMAND", "VAR_NAME", "VAR_VALUE"])
+    LIST_0          = Script(["COMMAND", "LIST_NAME", "##LIST_VALUES"])
+    VAR_SCRIPT_LIST = Script(["COMMAND", "VAR_NAME", "LIST_NAME", "LIST_INDEX"])
 
 class Scripter():
 
@@ -150,6 +153,8 @@ class Scripter():
         if Script.check_front(line, "RETURN"):      return Scripter.apply_script(line, Scripts.RETURN_VALUE)
         if Script.check_front(line, "R"):           return Scripter.apply_script(line, Scripts.REASSIGN)
         if Script.check_front(line, ">"):           return Scripter.apply_script(line, Scripts.CHUNK_CALL)
+        if Script.check_front(line, "LIST"):        return Scripter.apply_script(line, Scripts.LIST_0)
+        if Script.check_front(line, "EL"):          return Scripter.apply_script(line, Scripts.VAR_SCRIPT_LIST)
 
         Scripter.error("The given command is undefined.", num)
     
@@ -200,6 +205,10 @@ class Visitor():
 
             # variable is being created
             if command["COMMAND"] in ("C", "CCALL", "COP", "C>", "C>>"):
+                if command["COMMAND"] in ("C>>"):
+                    if command["CHUNK_NAME"] == "root":
+                        Visitor.handle_root_calls(command)
+                        continue
                 Visitor.handle_assignments(command)
 
             if command["COMMAND"] == "D":
@@ -208,6 +217,9 @@ class Visitor():
             if command["COMMAND"] == "CALL":
                 Visitor.handle_function_calls(command)
             
+            if command["COMMAND"] == "LIST":
+                Visitor.handle_array_creation(command)
+            
         print(Visitor.GLOBAL_MEMORY)
 
     @staticmethod
@@ -215,8 +227,10 @@ class Visitor():
         print("\nhandling root calls...")
 
         arg_values = []
-        for a in command["##ARGUMENTS"]:
-            arg_values.append(Visitor.get_value(a))
+        if command["COMMAND"] != "C>>":
+            for a in command["##ARGUMENTS"]:
+                arg_values.append(Visitor.get_value(a))
+        
         
         if command["FUNCTION_NAME"] == "print":
             if len(arg_values) == 1:
@@ -241,6 +255,51 @@ class Visitor():
                     text += char
                 
                 shell_print(text)
+
+        if command["FUNCTION_NAME"] == "list_remove_first":
+            arr_name = arg_values[0]
+            if len(Visitor.GLOBAL_MEMORY[arr_name]) != 0:
+                Visitor.GLOBAL_MEMORY[arr_name].pop(0)
+        
+        if command["FUNCTION_NAME"] == "list_remove_last":
+            arr_name = arg_values[0]
+            if len(Visitor.GLOBAL_MEMORY[arr_name]) != 0:
+                Visitor.GLOBAL_MEMORY[arr_name].pop(len(Visitor.GLOBAL_MEMORY[arr_name])-1)
+        
+        if command["FUNCTION_NAME"] == "list_remove_index":
+            arr_name = arg_values[0]
+            Visitor.GLOBAL_MEMORY[arr_name].pop(int(arg_values[1]))
+
+        if command["FUNCTION_NAME"] == "list_append":
+            arr_name = arg_values[0]
+            el = arg_values[1]
+            Visitor.GLOBAL_MEMORY[arr_name].append(el)
+
+        if command["FUNCTION_NAME"] == "list_append_at":
+            arr_name = arg_values[0]
+            el = arg_values[1]
+            index = int(arg_values[2])
+            Visitor.GLOBAL_MEMORY[arr_name].insert(index, el)
+
+        # C>>
+        if command["FUNCTION_NAME"] == "list_get_length":
+            arr_name = Visitor.get_value(command["##ARGUMENTS"])
+            var_name = command["VAR_NAME"]
+            Visitor.GLOBAL_MEMORY[var_name] = len(Visitor.GLOBAL_MEMORY[arr_name])
+        
+        if command["FUNCTION_NAME"] == "list_get_element":
+            arr_name = Visitor.get_value(command["##ARGUMENTS"][0])
+            arr_index = int(Visitor.get_value(command["##ARGUMENTS"][1]))
+            arr_element = Visitor.GLOBAL_MEMORY[arr_name][arr_index]
+
+            Visitor.GLOBAL_MEMORY[command["VAR_NAME"]] = arr_element
+        
+        if command["FUNCTION_NAME"] == "list_get_index":
+            arr_name = Visitor.get_value(command["##ARGUMENTS"][0])
+            arr_element = Visitor.get_value(command["##ARGUMENTS"][1])
+            arr_index = Visitor.GLOBAL_MEMORY[arr_name].index(arr_element)
+            
+            Visitor.GLOBAL_MEMORY[command["VAR_NAME"]] = arr_index
 
     @staticmethod
     def handle_reassign(command):
@@ -315,6 +374,20 @@ class Visitor():
             Visitor.CURRENT_FUNCTION = ""
         if command["TARGET"] == "CHUNK" and "::" in Visitor.CURRENT_SCOPE:
             Visitor.CURRENT_SCOPE = ""
+
+    @staticmethod
+    def handle_array_creation(command):
+        print("\nhandling array creation")
+        arr_name = command["LIST_NAME"]
+        arr_vars = command["##LIST_VALUES"]
+
+        # extracting values from the arr
+        arr_vars_ = []
+        for v in arr_vars:
+            arr_vars_.append(Visitor.get_value(v))
+
+        # commiting to memory
+        Visitor.GLOBAL_MEMORY[Visitor.CURRENT_SCOPE + arr_name] = arr_vars_
 
     @staticmethod
     def handle_assignments(command):
@@ -402,7 +475,7 @@ class Visitor():
     # -------------------------------------------------------------------------------------------
 
     @staticmethod
-    def get_value(n):
+    def get_value(n, acces_from_memory=True):
         n_ = Preprocessor.remove_front_whitespaces(n)
         
         # checking if its a string:
@@ -414,7 +487,7 @@ class Visitor():
             return True if n_ == "true" else False
         
         # checking if in global memory
-        if n_ in Visitor.GLOBAL_MEMORY.keys():
+        if n_ in Visitor.GLOBAL_MEMORY.keys() and acces_from_memory:
             return Visitor.GLOBAL_MEMORY[n_]
 
         # checking if it's a num
