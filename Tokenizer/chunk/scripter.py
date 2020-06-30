@@ -79,6 +79,7 @@ class Scripts():
     VAR_SCRIPT3     = Script(["COMMAND", "VAR_NAME", "CHUNK_NAME", "&:", "&:", "&:","CHUNK_VAR"])
     VAR_SCRIPT4     = Script(["COMMAND", "VAR_NAME", "CHUNK_NAME", "&:", "&:", "&:", "FUNCTION_NAME", "&:", "##ARGUMENTS"])
     VAR_SCRIPT5     = Script(["COMMAND", "VAR_NAME", "VAR1_NAME", "OPERATOR", "VAR2_NAME"])
+    VAR_SCRIPT6     = Script(["COMMAND", "VAR_NAME", "VAR1_NAME", "OPERATOR", "VAR2_NAME"])
     FUNCTION_CALL   = Script(["COMMAND", "FUNCTION_NAME", "&:", "##ARGUMENTS"])
     DEFINE_CHUNK    = Script(["COMMAND", "CHUNK_NAME", "&:", "&:"])
     DEFINE_FUNCTION = Script(["COMMAND", "FUNCTION_NAME", "&:", "&:","&:", "##ARGUMENTS"])
@@ -87,7 +88,6 @@ class Scripts():
     END             = Script(["COMMAND", "TARGET"])
     REASSIGN        = Script(["COMMAND", "VAR_NAME", "VAR_VALUE"])
     LIST_0          = Script(["COMMAND", "LIST_NAME", "##LIST_VALUES"])
-    VAR_SCRIPT_LIST = Script(["COMMAND", "VAR_NAME", "LIST_NAME", "LIST_INDEX"])
 
 class Scripter():
 
@@ -143,6 +143,7 @@ class Scripter():
 
         if Script.check_front(line, "CCALL"):       return Scripter.apply_script(line, Scripts.VAR_SCRIPT2)
         if Script.check_front(line, "COP"):         return Scripter.apply_script(line, Scripts.VAR_SCRIPT5)
+        if Script.check_front(line, "CON"):         return Scripter.apply_script(line, Scripts.VAR_SCRIPT6)
         if Script.check_front(line, "CHUNK"):       return Scripter.apply_script(line, Scripts.DEFINE_CHUNK)
         if Script.check_front(line, "CALL"):        return Scripter.apply_script(line, Scripts.FUNCTION_CALL)
         if Script.check_front(line, "C>>"):         return Scripter.apply_script(line, Scripts.VAR_SCRIPT4)
@@ -154,8 +155,7 @@ class Scripter():
         if Script.check_front(line, "R"):           return Scripter.apply_script(line, Scripts.REASSIGN)
         if Script.check_front(line, ">"):           return Scripter.apply_script(line, Scripts.CHUNK_CALL)
         if Script.check_front(line, "LIST"):        return Scripter.apply_script(line, Scripts.LIST_0)
-        if Script.check_front(line, "EL"):          return Scripter.apply_script(line, Scripts.VAR_SCRIPT_LIST)
-
+        
         Scripter.error("The given command is undefined.", num)
     
 
@@ -204,8 +204,8 @@ class Visitor():
                 Visitor.handle_chunk_creation(command)
 
             # variable is being created
-            if command["COMMAND"] in ("C", "CCALL", "COP", "C>", "C>>"):
-                if command["COMMAND"] in ("C>>"):
+            if command["COMMAND"] in ("C", "CCALL", "COP", "C>", "C>>", "CON"):
+                if command["COMMAND"] == "C>>":
                     if command["CHUNK_NAME"] == "root":
                         Visitor.handle_root_calls(command)
                         continue
@@ -300,6 +300,15 @@ class Visitor():
             arr_index = Visitor.GLOBAL_MEMORY[arr_name].index(arr_element)
             
             Visitor.GLOBAL_MEMORY[command["VAR_NAME"]] = arr_index
+        
+        if command["FUNCTION_NAME"] == "input":
+            input_text = Visitor.get_value(command["##ARGUMENTS"][0])
+            var_name = command["VAR_NAME"]
+
+            # getting input
+            input_ = input(str(input_text))
+
+            Visitor.GLOBAL_MEMORY[var_name] = input_
 
     @staticmethod
     def handle_reassign(command):
@@ -439,8 +448,29 @@ class Visitor():
         
             # commiting to memory
             Visitor.GLOBAL_MEMORY[var_name] = value_3
-            print(value_3) 
         
+        elif command["COMMAND"] == "CON":
+            print("condition assignemnt")
+
+            var_name = command["VAR_NAME"]
+            value_1 = Visitor.get_value(command["VAR1_NAME"])
+            value_2 = Visitor.get_value(command["VAR2_NAME"])
+            operation = command["OPERATOR"]
+            value_3 = None
+
+            if operation == "<":value_3 = value_1 < value_2
+            elif operation == ">":value_3 = value_1 > value_2
+            elif operation == "=":value_3 = value_1 == value_2
+            elif operation == "!":value_3 = value_1 != value_2
+            elif operation == ">=":value_3 = value_1 >= value_2
+            elif operation == "<=":value_3 = value_1 <= value_2
+            elif operation == "&":value_3 = value_1 and value_2
+            elif operation == "|":value_3 = value_1 or value_2
+            
+            # commiting to memory
+            Visitor.GLOBAL_MEMORY[var_name] = value_3
+            
+
         elif command["COMMAND"] == "C>":
             print("chunk variable assignment")
             chunk_name = command["CHUNK_NAME"]

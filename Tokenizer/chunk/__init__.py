@@ -5,6 +5,11 @@ def run(path):
     
     lines = Preprocessor.process(path)
 
+    Visitor.GLOBAL_MEMORY = {}
+    Visitor.GLOBAL_DEFINITIONS = {}
+    Visitor.CURRENT_SCOPE = ""
+    Visitor.CURRENT_FUNCTION = ""
+
     # getting the commands from scripter (lexer)
     commands = []
     num = 0
