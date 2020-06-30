@@ -1,9 +1,11 @@
 from chunk import run
 
-run("program.ck")
+# run("program.ck")
 
 
-import sys
+# import sys
 
-if len(sys.argv) > 1:
-    run("program_test.ck")
+# if len(sys.argv) > 1:
+#     run("program_test.ck")
+
+run("calculator.ck")

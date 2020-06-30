@@ -3,7 +3,12 @@ from chunk.preprocessor import Preprocessor
 import math
 
 def shell_print(s):
-    print("[SHELL] " + str(s))
+    # print("[SHELL] " + str(s))
+    print(str(s))
+def debug_print(s):
+    if False:
+
+        print("[DEBUG] " + str(s))
 
 class Script():
     def __init__(self, script_arr):
@@ -87,6 +92,7 @@ class Scripts():
     CHUNK_CALL      = Script(["COMMAND", "CHUNK_NAME", "&:", "&:", "&:", "FUNCTION_NAME", "&:", "##ARGUMENTS"])
     END             = Script(["COMMAND", "TARGET"])
     REASSIGN        = Script(["COMMAND", "VAR_NAME", "VAR_VALUE"])
+    IF_             = Script(["COMMAND", "CONDITION"])
     LIST_0          = Script(["COMMAND", "LIST_NAME", "##LIST_VALUES"])
 
 class Scripter():
@@ -136,7 +142,7 @@ class Scripter():
 
     @staticmethod
     def error(s, n=-1):
-        print("Scripter Error : line " + str(n) + ", " + s)
+        debug_print("Scripter Error : line " + str(n) + ", " + s)
 
     @staticmethod
     def select_script(line, num=-1):
@@ -155,6 +161,8 @@ class Scripter():
         if Script.check_front(line, "R"):           return Scripter.apply_script(line, Scripts.REASSIGN)
         if Script.check_front(line, ">"):           return Scripter.apply_script(line, Scripts.CHUNK_CALL)
         if Script.check_front(line, "LIST"):        return Scripter.apply_script(line, Scripts.LIST_0)
+        if Script.check_front(line, "IF"):          return Scripter.apply_script(line, Scripts.IF_)
+        
         
         Scripter.error("The given command is undefined.", num)
     
@@ -173,16 +181,29 @@ class Visitor():
     @staticmethod
     def parse(scripts, function_name=None):
         
+        ifs = 0
+
         for command in scripts:
 
             # end command?
             if command["COMMAND"] == "END":
+                if command["TARGET"] == "IF" and Visitor.CURRENT_FUNCTION == "":
+                    ifs -= 1 if ifs > 0 else 0
+                    continue
                 Visitor.handle_end(command)
 
             if Visitor.CURRENT_FUNCTION != "":
                 Visitor.GLOBAL_MEMORY[Visitor.CURRENT_FUNCTION][1].append(command)
                 continue
-                
+
+            if command["COMMAND"] == "IF":
+                condition = Visitor.get_value(command["CONDITION"])
+                if not condition:
+                    ifs += 1
+            
+            if ifs != 0:
+                continue
+    
             if command["COMMAND"] == "RETURN" and function_name != None:
                 for key in Visitor.GLOBAL_MEMORY.keys():
                     if Visitor.GLOBAL_MEMORY[key] == function_name:
@@ -220,11 +241,11 @@ class Visitor():
             if command["COMMAND"] == "LIST":
                 Visitor.handle_array_creation(command)
             
-        print(Visitor.GLOBAL_MEMORY)
+        debug_print(Visitor.GLOBAL_MEMORY)
 
     @staticmethod
     def handle_root_calls(command):
-        print("\nhandling root calls...")
+        debug_print("\nhandling root calls...")
 
         arg_values = []
         if command["COMMAND"] != "C>>":
@@ -309,37 +330,41 @@ class Visitor():
             input_ = input(str(input_text))
 
             Visitor.GLOBAL_MEMORY[var_name] = input_
-
+        
+        if command["FUNCTION_NAME"] == "int":
+            var_name = command["VAR_NAME"]
+            value = Visitor.get_value(command["##ARGUMENTS"][0])
+            Visitor.GLOBAL_MEMORY[var_name] = int(value)
     @staticmethod
     def handle_reassign(command):
-        print("\nhandling reassign")
+        debug_print("\nhandling reassign")
 
         var_name = command["VAR_NAME"]
         value = command["VAR_VALUE"]
-        print(command)
+        debug_print(command)
         value_ = Visitor.get_value(value)
 
         Visitor.GLOBAL_MEMORY[Visitor.get_value(var_name)] = value_
 
     @staticmethod
     def handle_chunk_calls(command):
-        print("\nhandling chunk call")
+        debug_print("\nhandling chunk call")
         
         chunk_name = command["CHUNK_NAME"]
-        print("calling chunk : " + chunk_name)
+        debug_print("calling chunk : " + chunk_name)
 
         Visitor.handle_function_calls(command, chunk_name + "::")
 
 
     @staticmethod
     def handle_chunk_creation(command):
-        print("\nhandling chunk creation")
+        debug_print("\nhandling chunk creation")
         # adjusting scope
         Visitor.CURRENT_SCOPE = command["CHUNK_NAME"] + "::"
     
     @staticmethod
     def handle_function_creation(command):
-        print("\nhandling function creation")
+        debug_print("\nhandling function creation")
         
         func_name = command["FUNCTION_NAME"]
         func_args = command["##ARGUMENTS"]
@@ -347,12 +372,12 @@ class Visitor():
         Visitor.CURRENT_FUNCTION = Visitor.CURRENT_SCOPE + func_name
         Visitor.GLOBAL_MEMORY[Visitor.CURRENT_FUNCTION] = [func_args, []]
 
-        print("updated memory")
-        print(Visitor.GLOBAL_MEMORY)
+        debug_print("updated memory")
+        debug_print(Visitor.GLOBAL_MEMORY)
 
     @staticmethod
     def handle_function_calls(command, chunk_scope=""):
-        print("\nhandling function calls")
+        debug_print("\nhandling function calls")
 
         # extracting name
         func_name = command["FUNCTION_NAME"]
@@ -377,7 +402,7 @@ class Visitor():
 
     @staticmethod
     def handle_end(command):
-        print("\nhandling end statement")
+        debug_print("\nhandling end statement")
 
         if command["TARGET"] == "D":
             Visitor.CURRENT_FUNCTION = ""
@@ -386,7 +411,7 @@ class Visitor():
 
     @staticmethod
     def handle_array_creation(command):
-        print("\nhandling array creation")
+        debug_print("\nhandling array creation")
         arr_name = command["LIST_NAME"]
         arr_vars = command["##LIST_VALUES"]
 
@@ -400,16 +425,16 @@ class Visitor():
 
     @staticmethod
     def handle_assignments(command):
-        print("\nhandling assignment")
+        debug_print("\nhandling assignment")
         if command["COMMAND"] == "C":
             value = Visitor.get_value(command["VAR_VALUE"])
             if value != None:
                 Visitor.GLOBAL_MEMORY[Visitor.CURRENT_SCOPE + command["VAR_NAME"]] = value 
-                print("updated memory")
-                print(Visitor.GLOBAL_MEMORY)
+                debug_print("updated memory")
+                debug_print(Visitor.GLOBAL_MEMORY)
 
         elif command["COMMAND"] == "CCALL":
-            print("return value assignment")
+            debug_print("return value assignment")
 
             # extracting function and variable name
             var_name = command["VAR_NAME"]
@@ -422,7 +447,7 @@ class Visitor():
             Visitor.handle_function_calls(command)
 
         elif command["COMMAND"] == "COP":
-            print("operation assignment")
+            debug_print("operation assignment")
             var_name = command["VAR_NAME"]
             var_name1 = command["VAR1_NAME"]
             var_name2 = command["VAR2_NAME"]
@@ -450,7 +475,7 @@ class Visitor():
             Visitor.GLOBAL_MEMORY[var_name] = value_3
         
         elif command["COMMAND"] == "CON":
-            print("condition assignemnt")
+            debug_print("condition assignemnt")
 
             var_name = command["VAR_NAME"]
             value_1 = Visitor.get_value(command["VAR1_NAME"])
@@ -472,18 +497,18 @@ class Visitor():
             
 
         elif command["COMMAND"] == "C>":
-            print("chunk variable assignment")
+            debug_print("chunk variable assignment")
             chunk_name = command["CHUNK_NAME"]
             chunk_var_name = command["CHUNK_VAR"]
             var_name = command["VAR_NAME"]
             value = Visitor.get_value(chunk_name + "::" + chunk_var_name)
             if value != None:
-                print("updating memory")
+                debug_print("updating memory")
                 Visitor.GLOBAL_MEMORY[var_name] = value
-                print(Visitor.GLOBAL_MEMORY)
+                debug_print(Visitor.GLOBAL_MEMORY)
         
         elif command["COMMAND"] == "C>>":
-            print("chunk call assignment")
+            debug_print("chunk call assignment")
 
             # extracting function and variable name
             var_name = command["VAR_NAME"]
@@ -525,7 +550,7 @@ class Visitor():
             num = float(n_)
             return num
         except:
-            print("the given var is undefined")
+            debug_print("the given var is undefined")
             return None
 
 
