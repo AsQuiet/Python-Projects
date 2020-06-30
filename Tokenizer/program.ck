@@ -1,9 +1,10 @@
-CHUNK chunk::
+D toRadians:: degrees
 
-    C name "quinten lenaerts"
+    COP pi_180 3.1415 / 180
+    COP rad degrees * pi_180
+    RETURN rad 
 
-    D get_name::
-        RETURN "cobe"
-    END D 
+END D
 
-END CHUNK
+CCALL c toRadians: 360
+> root::print:c

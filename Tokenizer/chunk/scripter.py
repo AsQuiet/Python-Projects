@@ -1,5 +1,6 @@
 import chunk.string as string
 from chunk.preprocessor import Preprocessor
+import math
 
 def shell_print(s):
     print("[SHELL] " + str(s))
@@ -76,6 +77,7 @@ class Scripts():
     VAR_SCRIPT2     = Script(["COMMAND", "VAR_NAME", "FUNCTION_NAME", "&:", "##ARGUMENTS"])
     VAR_SCRIPT3     = Script(["COMMAND", "VAR_NAME", "CHUNK_NAME", "&:", "&:", "&:","CHUNK_VAR"])
     VAR_SCRIPT4     = Script(["COMMAND", "VAR_NAME", "CHUNK_NAME", "&:", "&:", "&:", "FUNCTION_NAME", "&:", "##ARGUMENTS"])
+    VAR_SCRIPT5     = Script(["COMMAND", "VAR_NAME", "VAR1_NAME", "OPERATOR", "VAR2_NAME"])
     FUNCTION_CALL   = Script(["COMMAND", "FUNCTION_NAME", "&:", "##ARGUMENTS"])
     DEFINE_CHUNK    = Script(["COMMAND", "CHUNK_NAME", "&:", "&:"])
     DEFINE_FUNCTION = Script(["COMMAND", "FUNCTION_NAME", "&:", "&:","&:", "##ARGUMENTS"])
@@ -137,6 +139,7 @@ class Scripter():
     def select_script(line, num=-1):
 
         if Script.check_front(line, "CCALL"):       return Scripter.apply_script(line, Scripts.VAR_SCRIPT2)
+        if Script.check_front(line, "COP"):         return Scripter.apply_script(line, Scripts.VAR_SCRIPT5)
         if Script.check_front(line, "CHUNK"):       return Scripter.apply_script(line, Scripts.DEFINE_CHUNK)
         if Script.check_front(line, "CALL"):        return Scripter.apply_script(line, Scripts.FUNCTION_CALL)
         if Script.check_front(line, "C>>"):         return Scripter.apply_script(line, Scripts.VAR_SCRIPT4)
@@ -338,6 +341,32 @@ class Visitor():
 
         elif command["COMMAND"] == "COP":
             print("operation assignment")
+            var_name = command["VAR_NAME"]
+            var_name1 = command["VAR1_NAME"]
+            var_name2 = command["VAR2_NAME"]
+
+            value_1 = Visitor.get_value(var_name1)
+            value_2 = Visitor.get_value(var_name2)
+
+            value_3 = None
+
+            operation = command["OPERATOR"]
+            if operation == "+":
+                value_3 = value_1 + value_2
+            elif operation == "-":
+                value_3 = value_1 - value_2
+            elif operation == "*":
+                value_3 = value_1 * value_2
+            elif operation == "/":
+                value_3 = value_1 / value_2
+            elif operation == "**" or operation == "pow":
+                value_3 = value_1 ** value_2
+            elif operation == "sqrt" or operation == "//":
+                value_3 = round(value_1 ** (1 / value_2), 5)
+        
+            # commiting to memory
+            Visitor.GLOBAL_MEMORY[var_name] = value_3
+            print(value_3) 
         
         elif command["COMMAND"] == "C>":
             print("chunk variable assignment")
