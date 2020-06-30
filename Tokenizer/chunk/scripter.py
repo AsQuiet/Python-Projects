@@ -82,6 +82,8 @@ class Scripts():
     RETURN_VALUE    = Script(["COMMAND", "RETURN_VALUE"])
     CHUNK_CALL      = Script(["COMMAND", "CHUNK_NAME", "&:", "&:", "&:", "FUNCTION_NAME", "&:", "##ARGUMENTS"])
     END             = Script(["COMMAND", "TARGET"])
+    REASSIGN        = Script(["COMMAND", "VAR_NAME", "VAR_VALUE"])
+
 class Scripter():
 
     @staticmethod
@@ -91,6 +93,7 @@ class Scripter():
 
         for x in range(len(script.script_arr)):
             script_key = script.script_arr[x]
+
 
             if script_key in ("VAR_NAME", "FUNCTION_NAME"):
                 line_keywords[x] = string.remove_characters(line_keywords[x], [" "])
@@ -142,6 +145,7 @@ class Scripter():
         if Script.check_front(line, "END"):         return Scripter.apply_script(line, Scripts.END)
         if Script.check_front(line, "D"):           return Scripter.apply_script(line, Scripts.DEFINE_FUNCTION)
         if Script.check_front(line, "RETURN"):      return Scripter.apply_script(line, Scripts.RETURN_VALUE)
+        if Script.check_front(line, "R"):           return Scripter.apply_script(line, Scripts.REASSIGN)
         if Script.check_front(line, ">"):           return Scripter.apply_script(line, Scripts.CHUNK_CALL)
 
         Scripter.error("The given command is undefined.", num)
@@ -159,7 +163,7 @@ class Visitor():
     CURRENT_SCOPE = ""
     CURRENT_FUNCTION = ""
     @staticmethod
-    def parse(scripts):
+    def parse(scripts, function_name=None):
         
         for command in scripts:
 
@@ -170,6 +174,15 @@ class Visitor():
             if Visitor.CURRENT_FUNCTION != "":
                 Visitor.GLOBAL_MEMORY[Visitor.CURRENT_FUNCTION][1].append(command)
                 continue
+                
+            if command["COMMAND"] == "RETURN" and function_name != None:
+                for key in Visitor.GLOBAL_MEMORY.keys():
+                    if Visitor.GLOBAL_MEMORY[key] == function_name:
+                        Visitor.GLOBAL_MEMORY[key] = Visitor.get_value(command["RETURN_VALUE"])
+
+            if command["COMMAND"] == "R":
+                Visitor.handle_reassign(command)
+
 
             # chunk function is being called
             if command["COMMAND"] == ">":
@@ -183,11 +196,14 @@ class Visitor():
                 Visitor.handle_chunk_creation(command)
 
             # variable is being created
-            if command["COMMAND"] in ("C", "CCAL", "COP", "C>", "C>>"):
+            if command["COMMAND"] in ("C", "CCALL", "COP", "C>", "C>>"):
                 Visitor.handle_assignments(command)
 
             if command["COMMAND"] == "D":
                 Visitor.handle_function_creation(command)
+            
+            if command["COMMAND"] == "CALL":
+                Visitor.handle_function_calls(command)
             
         print(Visitor.GLOBAL_MEMORY)
 
@@ -223,10 +239,26 @@ class Visitor():
                 
                 shell_print(text)
 
+    @staticmethod
+    def handle_reassign(command):
+        print("\nhandling reassign")
+
+        var_name = command["VAR_NAME"]
+        value = command["VAR_VALUE"]
+        print(command)
+        value_ = Visitor.get_value(value)
+
+        Visitor.GLOBAL_MEMORY[Visitor.get_value(var_name)] = value_
 
     @staticmethod
-    def handle_chunk_calls(line):
+    def handle_chunk_calls(command):
         print("\nhandling chunk call")
+        
+        chunk_name = command["CHUNK_NAME"]
+        print("calling chunk : " + chunk_name)
+
+        Visitor.handle_function_calls(command, chunk_name + "::")
+
 
     @staticmethod
     def handle_chunk_creation(command):
@@ -248,8 +280,34 @@ class Visitor():
         print(Visitor.GLOBAL_MEMORY)
 
     @staticmethod
+    def handle_function_calls(command, chunk_scope=""):
+        print("\nhandling function calls")
+
+        # extracting name
+        func_name = command["FUNCTION_NAME"]
+        func_name = chunk_scope + func_name
+
+        for x in range(len(Visitor.GLOBAL_MEMORY[func_name][0])):
+            # getting name of each argument
+            arg = Visitor.GLOBAL_MEMORY[func_name][0][x]
+            arg_ = Preprocessor.remove_front_whitespaces(arg)
+
+            # getting the value for each argument
+            given_arg = command["##ARGUMENTS"][x]
+            given_arg_ = Preprocessor.remove_front_whitespaces(given_arg)
+
+            # committing arg and corresponding value to global memory
+            Visitor.GLOBAL_MEMORY[arg_] = Visitor.get_value(given_arg_)
+        
+        # calling function => simply parse all of the function lines
+        Visitor.parse(Visitor.GLOBAL_MEMORY[func_name][1], func_name)
+
+
+
+    @staticmethod
     def handle_end(command):
         print("\nhandling end statement")
+
         if command["TARGET"] == "D":
             Visitor.CURRENT_FUNCTION = ""
         if command["TARGET"] == "CHUNK" and "::" in Visitor.CURRENT_SCOPE:
@@ -258,7 +316,6 @@ class Visitor():
     @staticmethod
     def handle_assignments(command):
         print("\nhandling assignment")
-
         if command["COMMAND"] == "C":
             value = Visitor.get_value(command["VAR_VALUE"])
             if value != None:
@@ -266,11 +323,49 @@ class Visitor():
                 print("updated memory")
                 print(Visitor.GLOBAL_MEMORY)
 
-        elif command["COMMAND"] == "CCAL":
+        elif command["COMMAND"] == "CCALL":
             print("return value assignment")
+
+            # extracting function and variable name
+            var_name = command["VAR_NAME"]
+            func_name = command["FUNCTION_NAME"]
+
+            # commiting to memory => might create temp_memory? (for safety) => do the same for args?
+            Visitor.GLOBAL_MEMORY[var_name] = func_name
+
+            # calling the fucntion => parser will handle return statements and loop through memory until it finds the correct function
+            Visitor.handle_function_calls(command)
 
         elif command["COMMAND"] == "COP":
             print("operation assignment")
+        
+        elif command["COMMAND"] == "C>":
+            print("chunk variable assignment")
+            chunk_name = command["CHUNK_NAME"]
+            chunk_var_name = command["CHUNK_VAR"]
+            var_name = command["VAR_NAME"]
+            value = Visitor.get_value(chunk_name + "::" + chunk_var_name)
+            if value != None:
+                print("updating memory")
+                Visitor.GLOBAL_MEMORY[var_name] = value
+                print(Visitor.GLOBAL_MEMORY)
+        
+        elif command["COMMAND"] == "C>>":
+            print("chunk call assignment")
+
+            # extracting function and variable name
+            var_name = command["VAR_NAME"]
+            func_name = command["FUNCTION_NAME"]
+            chunk_name = command["CHUNK_NAME"] + "::"
+            func_name = chunk_name + func_name
+
+            # commiting to memory => might create temp_memory? (for safety) => do the same for args?
+            Visitor.GLOBAL_MEMORY[var_name] = func_name
+
+            # calling the fucntion => parser will handle return statements and loop through memory until it finds the correct function
+            Visitor.handle_function_calls(command, chunk_name)
+
+            
 
     
     # -------------------------------------------------------------------------------------------
