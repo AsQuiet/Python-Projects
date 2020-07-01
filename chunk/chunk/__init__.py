@@ -15,7 +15,9 @@ def run(path):
     num = 0
     for line in lines:
         num +=  1
-        commands.append(Scripter.select_script(line, num))
+        s = Scripter.select_script(line, num)
+        if s != None:
+            commands.append(s)
     
     # print("\nparsed commands :")
     # for c in commands:

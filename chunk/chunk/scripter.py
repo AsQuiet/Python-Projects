@@ -3,11 +3,10 @@ from chunk.preprocessor import Preprocessor
 import math
 
 def shell_print(s):
-    # print("[SHELL] " + str(s))
-    print(str(s))
+    print("[SHELL] " + str(s))
+    # print(str(s))
 def debug_print(s):
     if False:
-
         print("[DEBUG] " + str(s))
 
 class Script():
@@ -96,56 +95,55 @@ class Scripts():
     LIST_0          = Script(["COMMAND", "LIST_NAME", "##LIST_VALUES"])
 
 class Scripter():
-
+    # used in error handling
+    CURRENT_LINE = -1
     @staticmethod
     def apply_script(line, script):
         line_data = {}
         line_keywords = Script.split(line)
 
-        for x in range(len(script.script_arr)):
-            script_key = script.script_arr[x]
+        try:
+            for x in range(len(script.script_arr)):
+                script_key = script.script_arr[x]
 
 
-            if script_key in ("VAR_NAME", "FUNCTION_NAME"):
-                line_keywords[x] = string.remove_characters(line_keywords[x], [" "])
+                if script_key in ("VAR_NAME", "FUNCTION_NAME"):
+                    line_keywords[x] = string.remove_characters(line_keywords[x], [" "])
 
-            # stands for symbol
-            if "&" in script_key:continue
-            # means that all following data should be put in an array
-            if "##" in script_key:
-                arr = []
-                i = x
-                while True:
-                    try:
-                        arr.append(line_keywords[i])
-                    except:
-                        break
-                    i += 1
-                line_data[script_key] = arr
-                break
+                # stands for symbol
+                if "&" in script_key:continue
+                # means that all following data should be put in an array
+                if "##" in script_key:
+                    arr = []
+                    i = x
+                    while True:
+                        try:
+                            arr.append(line_keywords[i])
+                        except:
+                            break
+                        i += 1
+                    line_data[script_key] = arr
+                    break
 
-            # general rule
-            line_data[script_key] = line_keywords[x]
-            if script_key == "COMMAND":
-                line_data[script_key] = line_keywords[x].upper()
+                # general rule
+                line_data[script_key] = line_keywords[x]
+                if script_key == "COMMAND":
+                    line_data[script_key] = line_keywords[x].upper()
 
-        if line_data["COMMAND"] == "CHUNK":
-            Visitor.GLOBAL_DEFINITIONS[line_data["CHUNK_NAME"]] = "CHUNK"
-        if line_data["COMMAND"] in ("C", "CCAL"):
-            Visitor.GLOBAL_DEFINITIONS[line_data["VAR_NAME"]] = "VARIABLE"
-        if line_data["COMMAND"] == "D":
-            Visitor.GLOBAL_DEFINITIONS[line_data["FUNCTION_NAME"]] = "FUNCTION"
-        # if line_data["COMMAND"] == ">":
-        #     Interpreter.GLOBAL_MEMORY[line_data["CHUNK_NAME"]] = "CHUNK"
-
+            
+            line_data["LINE"] = Scripter.CURRENT_LINE
+        except:
+            Scripter.error("error extracting data from line.", Scripter.CURRENT_LINE)
+            return None
         return line_data
 
     @staticmethod
     def error(s, n=-1):
-        debug_print("Scripter Error : line " + str(n) + ", " + s)
+        print("Scripter Error : line " + str(n) + ", " + s)
 
     @staticmethod
     def select_script(line, num=-1):
+        Scripter.CURRENT_LINE = num
 
         if Script.check_front(line, "CCALL"):       return Scripter.apply_script(line, Scripts.VAR_SCRIPT2)
         if Script.check_front(line, "COP"):         return Scripter.apply_script(line, Scripts.VAR_SCRIPT5)
@@ -162,9 +160,9 @@ class Scripter():
         if Script.check_front(line, ">"):           return Scripter.apply_script(line, Scripts.CHUNK_CALL)
         if Script.check_front(line, "LIST"):        return Scripter.apply_script(line, Scripts.LIST_0)
         if Script.check_front(line, "IF"):          return Scripter.apply_script(line, Scripts.IF_)
-        
-        
-        Scripter.error("The given command is undefined.", num)
+             
+        Scripter.error("the given command is undefined.", num)
+        return None
     
 
 class Visitor():
@@ -178,6 +176,11 @@ class Visitor():
     # used to change the way variables are put into memory depending on the scope
     CURRENT_SCOPE = ""
     CURRENT_FUNCTION = ""
+
+    @staticmethod
+    def error(s,n=-1):
+        print("Interpreter error : line " + str(n) + ", " + str(s))
+
     @staticmethod
     def parse(scripts, function_name=None):
         
@@ -246,7 +249,7 @@ class Visitor():
     @staticmethod
     def handle_root_calls(command):
         debug_print("\nhandling root calls...")
-
+    
         arg_values = []
         if command["COMMAND"] != "C>>":
             for a in command["##ARGUMENTS"]:
