@@ -2,12 +2,6 @@
 
 CHUNK calc::
 
-    
-    C plus "+"  
-    C minus "-"
-    C multiply "*"
-    C divide "/"
-
     D get_input::
 
         C>> NUM1 root::input:"type in number one : "
@@ -23,32 +17,28 @@ CHUNK calc::
 
     D calculate::a, b, operator
 
-        C>> a_ root::int:a
-        C>> b_ root::int:b
+        C>> a_ root::float:a
+        C>> b_ root::float:b
 
-        C> temp calc::plus
-        CON temp_ operator = temp
+        CON temp_ operator = "+"
         IF temp_
             COP result a_ + b_
             > root::print:"result is : %v", result 
         END IF   
 
-        C> temp calc::minus
-        CON temp_ operator = temp
+        CON temp_ operator = "-"
         IF temp_
             COP result a_ - b_
             > root::print:"result is : %v", result 
         END IF   
 
-        C> temp calc::divide
-        CON temp_ operator = temp
+        CON temp_ operator = "/"
         IF temp_
             COP result a_ / b_
             > root::print:"result is : %v", result 
         END IF   
 
-        C> temp calc::multiply
-        CON temp_ operator = temp
+        CON temp_ operator = "*"
         IF temp_
             COP result a_ * b_
             > root::print:"result is : %v", result 

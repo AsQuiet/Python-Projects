@@ -335,6 +335,16 @@ class Visitor():
             var_name = command["VAR_NAME"]
             value = Visitor.get_value(command["##ARGUMENTS"][0])
             Visitor.GLOBAL_MEMORY[var_name] = int(value)
+        
+        if command["FUNCTION_NAME"] == "float":
+            var_name = command["VAR_NAME"]
+            value = Visitor.get_value(command["##ARGUMENTS"][0])
+            Visitor.GLOBAL_MEMORY[var_name] = float(value)
+        
+        if command["FUNCTION_NAME"] == "str":
+            var_name = command["VAR_NAME"]
+            value = Visitor.get_value(command["##ARGUMENTS"][0])
+            Visitor.GLOBAL_MEMORY[var_name] = str(value)
     @staticmethod
     def handle_reassign(command):
         debug_print("\nhandling reassign")
