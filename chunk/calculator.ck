@@ -15,6 +15,7 @@ CHUNK calc::
     
     END D
 
+
     D calculate::a, b, operator
 
         C>> a_ root::float:a
@@ -50,7 +51,19 @@ CHUNK calc::
 
 END CHUNK
 
-> calc::get_input:
+// > calc::get_input:
+
+CHUNK test::
+
+   D get_value::
+	RETURN 4
+   END D	
+
+END CHUNK
+
+C>> g test::get_value:
+> root::print:g
+
 
 /* Printing out an array
 

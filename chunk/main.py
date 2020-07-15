@@ -1,6 +1,6 @@
 from chunk import run
 
-run("program.ck")
+run("calculator.ck")
 
 
 # import sys
