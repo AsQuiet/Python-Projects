@@ -54,9 +54,57 @@ class Win():
     def remove_color(self, name):
         pair_num  = self.themes[name]
         Win.stdscr.attroff(cs.color_pair(pair_num))
-
-
     
+    def get_input(self):
+        return Win.stdscr.getkey()
+    
+    def convert_to_str(self, key):
+        return cs.ascii.unctrl(key)
+
+
+class field():
+
+    def __init__(self):
+        self.grid = [[]]
+
+        self.pos_x = 0
+        self.pos_y = 0
+
+        self.height = 0
+        self.width = 0
+
+    def add_char(self, char):
+    
+        if self.pos_x < len(self.grid[self.pos_y]) and self.pos_y < self.height:
+            self.grid[self.pos_y][self.pos_x] = char
+        else:
+
+            while self.pos_y >= self.height:
+
+                self.grid.append([])
+                self.height += 1
+            
+            while self.pos_x >= len(self.grid[self.pos_y]):
+                self.grid[self.pos_y].append(" ")
+                self.width += 1
+            
+            self.add_char(char)
+    
+    def add_str(self, string):
+
+        for x in range(len(string)):
+            self.add_char(string[x])
+            self.pos_x += 1
+    
+    def set_char(self, char, x, y):
+        x_, y_ = self.pos_x, self.pos_y
+        self.set_pos(x,y)
+        self.add_char(char)
+        self.set_pos(x_, y_)
+
+    def set_pos(self, x, y):
+        self.pos_x = x
+        self.pos_y = y 
         
     
     
