@@ -1,4 +1,5 @@
 import curses as cs 
+from curses import textpad
 import math
 
 class Win():
@@ -60,6 +61,12 @@ class Win():
     
     def convert_to_str(self, key):
         return cs.ascii.unctrl(key)
+    
+    def create_textbox(self):
+        return textpad.Textbox(Win.stdscr, True)
+    
+    def clear(self):
+        Win.stdscr.clear()
 
 
 class field():
@@ -108,3 +115,104 @@ class field():
         
     
     
+
+
+
+#     import curses as cs
+# import time
+
+# class Field():
+#     """Input field for handling user input."""
+
+#     C_MOVE_UP = 1
+#     C_MOVE_DOWN = 2
+#     C_MOVE_LEFT = 3
+#     C_MOVE_RIGHT = 4
+
+#     C_BACKSPACE = 5
+#     C_ADD_CHARACTER = 6
+
+#     def __init__(self):
+
+#         self.cs_x = 0
+#         self.cs_y = 1
+
+#         self.field = []
+    
+    
+#     def do_command(self, cmd, other=None):
+
+#         if cmd == Field.C_MOVE_UP:
+#             if self.cs_y > 0:
+#                 self.cs_y -= 1
+#             self.cs_x = 0
+#         elif cmd == Field.C_MOVE_DOWN:
+#             self.cs_y += 1
+#             self.cs_x = 0
+#         elif cmd == Field.C_MOVE_LEFT:
+#             if self.cs_x > 0:
+#                 self.cs_x -= 1
+#         elif cmd == Field.C_MOVE_RIGHT:
+#             self.cs_x += 1
+
+# def draw_field(field, stdscr):
+#     stdscr.clear()
+#     max_y, max_x = stdscr.getmaxyx()
+
+#     offset = 0
+#     for x in range(len(field.field)):
+#         stdscr.addstr(x + offset, 0, field.field[x])
+#         if len(field.field[x]) >= max_x:
+#             offset += 1
+
+# def main(stdscr):
+#     cs.curs_set(1)
+#     cs.use_default_colors()
+#     cs.start_color()    
+#     field = Field()
+
+#     while 1:
+#         draw_field(field, stdscr)
+        
+#         stdscr.move(field.cs_y, field.cs_x)
+        
+#         ch = stdscr.getch()
+
+#         if ch in (cs.KEY_ENTER, 10, 13):
+#             break
+#         elif ch == cs.KEY_UP:
+#             field.do_command(Field.C_MOVE_UP)
+#         elif ch == cs.KEY_DOWN:
+#             field.do_command(Field.C_MOVE_DOWN)
+#         elif ch == cs.KEY_LEFT:
+#             field.do_command(Field.C_MOVE_LEFT)
+#         elif ch == cs.KEY_RIGHT:
+#             field.do_command(Field.C_MOVE_RIGHT)
+
+#         else:
+#             # is character => should be added to field
+#             try: 
+#                 char = str(cs.ascii.unctrl((ch)))
+#                 # field.do_command(Field.C_ADD_CHARACTER, char)
+#                 stdscr.addstr(0, 1, char)
+#             except:
+#                 stdscr.refresh()
+    
+#         stdscr.refresh()
+
+
+
+class keycodes():
+
+    CHARS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']  
+    CHARS.extend(['(', ')', '{', '}', '[', ']', '+', '-', '/', '*', '*', '%', '$', '&', 'é', '`', ':', ';', '?', ",", '"', "'", '=', ])
+
+    @staticmethod
+    def to_string(key):
+        for char in keycodes.CHARS:
+            try:
+                if key == ord(char):
+                    return char
+            except:
+                continue
+        return None

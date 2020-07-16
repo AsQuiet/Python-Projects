@@ -1,74 +1,294 @@
-from win import Win, cs, field
-import time
-import curses.ascii as ai 
 
-win = Win()
-win.init()
+class InputField():
 
-f = field()
+    def __init__(self, max_x, max_y):
 
+        self.max_x = max_x
+        self.max_y = max_y
 
-def print_field():
-    Win.stdscr.clear()
-    i = 0
-    for line in f.grid:
-        s = ""
-        for char in line:
-            s+= char
-        win.writestr(0, i, s)
-        i += 1
+        self.data = [] # array of strings representing the inputed text
 
-def handle_command(key):
+        self.display_y = 0 # from what line should we start drawing the data (len(data) - max_y) >= 0
 
-    if key == 'KEY_DOWN':
-        f.pos_y += 1
-        return True
-    if key == 'KEY_UP':
-        f.pos_y += -1 if f.pos_y > 0 else 0
-        return True
-    if key == 'KEY_LEFT':
-        f.pos_x += -1 if f.pos_x > 0 else 0
-        return True
-    if key == 'KEY_RIGHT':
-        f.pos_x += 1
-        return True
-    if key == "^J":
-        f.pos_y += 1
-        f.pos_x = 0
+        self.cursor_x = 0
+        self.cursor_y = 0
 
-    return False
-while True:
+        self.generate_buffer(max_x, max_y)
+
+    def set_max(self, x, y):
+        self.max_x = x
+        self.max_y = y
     
-    print_field()
-    Win.stdscr.move(f.pos_y, f.pos_x)
-    key = win.get_input()
-    try:
-        key = win.convert_to_str(key)
-    except:
-        win.writestr(0, 10, "hello")
+    def add_char(self, char):
 
-    if handle_command(key):
-        continue
+        new_s = self.set_str_index(
+            self.data[self.cursor_y],
+            self.cursor_x,
+            char)
 
-    if key == "^P":
-        break
+        self.data[self.cursor_y] = new_s
     
-    elif key == "^H":
-        # f.pos_x -= 1 if f.pos_x > 0 else 0
-        if f.pos_x == 0:
-            f.pos_y += -1 if f.pos_y > 0 else 0
-            f.pos_x = len(f.grid[f.pos_y])
-        else:
-            f.pos_x -= 1
-        f.add_char(" ")
+    def advance(self):
+        """Should, in most cases be called after add_char."""
+        self.cursor_x += 1
+        if self.cursor_x >= self.max_x:
+            self.cursor_x = 0
+            self.cursor_y += 1
 
-    elif key[0] != "^":
-        f.add_char(key)
-        f.pos_x += 1
     
-    win.refresh()
+    def set_cursor(self, x=None, y=None):
+        self.cursor_x = x if x != None else self.cursor_x
+        self.cursor_y = y if y != None else self.cursor_y
+    
+    def generate_buffer_string(self, length):
+        s = ''
+        for x in range(length):
+            s += ' '
+        return s
+
+    def generate_buffer(self, width, height):
+        self.data.clear()
+        for y in range(height):
+            self.data.append(self.generate_buffer_string(width))
+    
+    def set_str_index(self, s, index, char):
+        """set_str_index('foo', 1, 'O') => 'fOo' """
+        new_s = ''
+        for x in range(len(s)):
+            char_ = s[x]
+            # print('"' + char + '"' + " - " + str(x))
+            if x == index:
+                new_s += char
+            else:
+                new_s += char_
+        return new_s
 
 
-time.sleep(0.5)
-win.exit()
+def main():
+
+    i = InputField(100, 25)
+
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    i.add_char("q")
+    i.advance()
+    
+    
+    
+    print(i.data)
+
+    
+
+main()
+
 
