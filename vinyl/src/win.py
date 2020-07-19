@@ -1,6 +1,7 @@
 import tkinter as tk
 import string_lib as sl
 import os, sys
+import io_lib as io
 
 class Win():
 
@@ -16,13 +17,13 @@ class Win():
         self.inputfield = tk.Text(self.root, width=width, height=height-1,borderwidth = 1,relief="flat",highlightthickness=0) 
         self.inputfield.config(tabs=('1c', '2c'))
         self.inputfield.bind('<KeyRelease>', self.handle_input)
-        self.inputfield.pack(fill=tk.BOTH, expand=True)
+        self.inputfield.pack(fill=tk.BOTH) 
 
         self.command_line = tk.Entry(self.root, width = width)
         self.command_line.bind('<KeyRelease>', self.handle_command_line_input)
         self.command_line.pack(fill=tk.X, side=tk.BOTTOM)
         self.command_function = lambda cmd : None   # temp function => will be set by contol class
-
+        self.last_pressed_symbol = ''
         # options
         self.center_and_opp = {}
 
@@ -49,6 +50,11 @@ class Win():
         if 'p' not in char and sym == 'p':
             self.focus_on_cmd()
         
+        if ('s' == sym and self.last_pressed_symbol in ('Control_L', 'Meta_L')) or ('s' == self.last_pressed_symbol and sym in ('Control_L', 'Meta_L')):
+            print('saving file ;....;')
+        
+        self.last_pressed_symbol = sym
+        
     def handle_command_line_input(self, event):
         symbol = event.keysym
 
@@ -57,7 +63,7 @@ class Win():
                 self.command_function(self.command_line.get())
         elif symbol == 'Escape':
             self.focus_on_inputfield()
-        
+                
     def set_inputfield(self, text):
         self.inputfield.delete('1.0', tk.END)
 
@@ -80,4 +86,9 @@ class Win():
             self.center_and_opp[char] = char2
     
     def start(self):
+        self.load_config()
         self.root.mainloop()
+    
+    def load_config(self):
+        self.global_options = io.read_dictionary("config.vnyl", '=')
+        print(self.global_options)

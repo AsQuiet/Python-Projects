@@ -11,11 +11,15 @@ class Control():
     def command(self, text):
         print('got command : ' + text)
         command = sl.list_separator(text, ' ')
-
+        print(command)
         if command[0] == 'open':
             self.open_file(command)
         elif command[0] == 'save':
             self.save_file(command)
+        elif command[0] == 'cd':
+            self.cd_path(command)
+        elif command[0] == 'getpath':
+            self.win.set_cmd(self.win.global_options["path"])
 
     def open_file(self, cmd):
 
@@ -54,5 +58,17 @@ class Control():
 
             self.win.set_inputfield(lines)
             self.win.root.title("vinyl - " + cmd[1])
+        except:
+            self.win.set_cmd('invalid')
+    
+    def cd_path(self, command):
+        print("cd..")
+
+        path_ = command[1]
+
+        current_path = self.win.global_options["path"]
+        try:
+            self.win.global_options["path"] = os.path.join(current_path, path_)
+            self.win.set_cmd("new path is : " + self.win.global_options["path"])
         except:
             self.win.set_cmd('invalid')
